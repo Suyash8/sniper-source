@@ -1,0 +1,210 @@
+import type { Problem } from "./types";
+
+const L = (slug: string) => `https://leetcode.com/problems/${slug}/description/`;
+
+// Domain D — 15 SQL problems. Exam schema vibe: students/courses/enrollments + employees/departments.
+export const PROBLEMS_SQL: Problem[] = [
+  {
+    id: "lc-176", title: "Second Highest Salary", domainId: "D", platform: "LEETCODE", leetcodeSlug: "second-highest-salary",
+    leetcodeUrl: L("second-highest-salary"), pattern: "Nth Highest", difficulty: "MEDIUM", topicIds: ["D5", "D6"],
+    statement: "Return the second highest DISTINCT salary. If none exists, return NULL.",
+    examples: [
+      { input: "Salaries: 100, 200, 300", output: "200" },
+      { input: "Salaries: 100", output: "NULL", why: "no second value" },
+    ],
+    hints: ["Way 2: MAX below MAX.", "Way 3: DENSE_RANK = 2.", "Way 1: LIMIT 1 OFFSET 1 — but what does it return when there's no second row?"],
+    approach: "MAX(salary) WHERE salary < (SELECT MAX(salary)) returns NULL when no second salary exists — matching the expected output. DENSE_RANK version generalizes to Nth.",
+    solution: `-- Way 2 (recommended — NULL-safe)\nSELECT MAX(salary) AS SecondHighestSalary\nFROM employee\nWHERE salary < (SELECT MAX(salary) FROM employee);\n\n-- Way 3 (generalizes to Nth)\nSELECT salary FROM (\n  SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk\n  FROM employee\n) t WHERE rnk = 2;`,
+    solutionLang: "sql", complexity: "O(n log n) with rank / O(n) with max-below-max",
+  },
+  {
+    id: "lc-177", title: "Nth Highest Salary", domainId: "D", platform: "LEETCODE", leetcodeSlug: "nth-highest-salary",
+    leetcodeUrl: L("nth-highest-salary"), pattern: "Nth Highest", difficulty: "MEDIUM", topicIds: ["D5", "D6"],
+    statement: "Return the n-th highest DISTINCT salary; NULL if it doesn't exist.",
+    examples: [
+      { input: "Salaries: 100,200,300, n = 2", output: "200" },
+      { input: "Salaries: 100, n = 2", output: "NULL" },
+    ],
+    hints: ["DENSE_RANK then filter rnk = n.", "DISTINCT matters: ties must count once."],
+    approach: "Rank distinct salaries with DENSE_RANK over ORDER BY salary DESC; select rnk = n. The subquery wrapper is mandatory — window results can't go in WHERE.",
+    solution: `SELECT DISTINCT salary\nFROM (\n  SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk\n  FROM employee\n) t\nWHERE rnk = :n;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-182", title: "Duplicate Emails", domainId: "D", platform: "LEETCODE", leetcodeSlug: "duplicate-emails",
+    leetcodeUrl: L("duplicate-emails"), pattern: "GROUP BY + HAVING", difficulty: "EASY", topicIds: ["D6", "D2"],
+    statement: "Find all emails that appear more than once.",
+    examples: [
+      { input: "a@b.com, c@d.com, a@b.com", output: "a@b.com" },
+    ],
+    hints: ["GROUP BY email.", "HAVING COUNT(*) > 1 — not WHERE."],
+    approach: "Group by email, filter groups with HAVING COUNT(*) > 1. WHERE can't see aggregates.",
+    solution: `SELECT email\nFROM person\nGROUP BY email\nHAVING COUNT(*) > 1;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-183", title: "Customers Who Never Order", domainId: "D", platform: "LEETCODE", leetcodeSlug: "customers-who-never-order",
+    leetcodeUrl: L("customers-who-never-order"), pattern: "LEFT JOIN + IS NULL", difficulty: "EASY", topicIds: ["D6", "D3", "D4"],
+    statement: "Return customers who have never placed an order.",
+    examples: [
+      { input: "Customers: Joe, Henry; Orders: by Joe", output: "Henry" },
+    ],
+    hints: ["LEFT JOIN keeps customers with no orders.", "Their order columns come out NULL → WHERE o.id IS NULL."],
+    approach: "LEFT JOIN orders; rows with NULL order id are the never-ordered customers. NOT IN works too but dies on NULLs — LEFT JOIN is the exam answer.",
+    solution: `SELECT c.name AS customers\nFROM customers c\nLEFT JOIN orders o ON o.customerId = c.id\nWHERE o.id IS NULL;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-184", title: "Department Highest Salary", domainId: "D", platform: "LEETCODE", leetcodeSlug: "department-highest-salary",
+    leetcodeUrl: L("department-highest-salary"), pattern: "Top per group", difficulty: "MEDIUM", topicIds: ["D5", "D3"],
+    statement: "For each department, return its employees who earn the maximum salary in that department.",
+    examples: [
+      { input: "IT: 90000, 85000 · Sales: 70000", output: "Joe (IT, 90000), Henry (Sales, 70000)" },
+    ],
+    hints: ["DENSE_RANK PARTITION BY department.", "Filter rnk = 1 in an outer query.", "Or: salary = (SELECT MAX … WHERE same dept) — correlated."],
+    approach: "Window function version: rank salaries per department partition, keep rank 1. Correlated subquery version: employee's salary equals their department's max — both are exam-valid.",
+    solution: `-- Window function way\nSELECT d.name AS department, t.name AS employee, t.salary\nFROM (\n  SELECT name, salary, departmentId,\n         DENSE_RANK() OVER (PARTITION BY departmentId ORDER BY salary DESC) AS rnk\n  FROM employee\n) t\nJOIN department d ON d.id = t.departmentId\nWHERE t.rnk = 1;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-175", title: "Combine Two Tables", domainId: "D", platform: "LEETCODE", leetcodeSlug: "combine-two-tables",
+    leetcodeUrl: L("combine-two-tables"), pattern: "LEFT JOIN", difficulty: "EASY", topicIds: ["D3"],
+    statement: "Return firstName, lastName, city, state for every Person — even if Address has no row for them.",
+    examples: [
+      { input: "Person: Allen; no address row", output: "Allen Wang, NULL, NULL" },
+    ],
+    hints: ["'Even if there's no match' is the LEFT JOIN slogan.", "INNER would drop Allen entirely."],
+    approach: "LEFT JOIN Address ON personId — unmatched people carry NULL address columns.",
+    solution: `SELECT p.firstName, p.lastName, a.city, a.state\nFROM person p\nLEFT JOIN address a ON a.personId = p.personId;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-577", title: "Employee Bonus", domainId: "D", platform: "LEETCODE", leetcodeSlug: "employee-bonus",
+    leetcodeUrl: L("employee-bonus"), pattern: "LEFT JOIN", difficulty: "EASY", topicIds: ["D3", "D1"],
+    statement: "Report each employee's name and bonus; employees with bonus < 1000 or NULL bonus.",
+    examples: [
+      { input: "Emp John (bonus 1000), Brad (no bonus)", output: "Brad NULL" },
+    ],
+    hints: ["LEFT JOIN first, then filter in WHERE — bonus IS NULL must pass.", "A WHERE bonus < 1000 would kill NULL rows — use (bonus < 1000 OR bonus IS NULL)."],
+    approach: "LEFT JOIN keeps everyone; WHERE keeps (bonus < 1000 OR bonus IS NULL). The NULL row fails bonus < 1000 silently — the exam's exact trap.",
+    solution: `SELECT e.name, b.bonus\nFROM employee e\nLEFT JOIN bonus b ON b.empId = e.empId\nWHERE b.bonus < 1000 OR b.bonus IS NULL;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-1280", title: "Students and Examinations (3-table)", domainId: "D", platform: "LEETCODE", leetcodeSlug: "students-and-examinations",
+    leetcodeUrl: L("students-and-examinations"), pattern: "3-table JOIN + COUNT", difficulty: "MEDIUM", topicIds: ["D3", "D2"],
+    statement: "For EVERY student × subject pair, count how many times the student attended that subject's exam — including zeros. This is THE exam pattern: 3 tables + cross join + LEFT JOIN + COUNT.",
+    examples: [
+      { input: "Students: Alice, Bob; Subjects: Math, Physics; Alice wrote Math twice", output: "Alice Math 2 · Alice Physics 0 · Bob Math 0 · Bob Physics 0" },
+    ],
+    hints: [
+      "Start from students CROSS JOIN subjects — every pair must appear.",
+      "LEFT JOIN examinations on BOTH student_id AND subject_name.",
+      "COUNT(e.student_id) counts matches; COUNT(*) would count NULL rows as 1.",
+    ],
+    approach: "Base = all combinations (CROSS JOIN). LEFT JOIN the exam records matching both keys. Count matched rows per pair with COUNT of a right-table column (NULLs skipped) grouped by student+subject.",
+    solution: `SELECT s.name, sub.subject_name, COUNT(e.student_id) AS attended_exams\nFROM students s\nCROSS JOIN subjects sub\nLEFT JOIN examinations e\n  ON e.student_id = s.id AND e.subject_name = sub.subject_name\nGROUP BY s.id, s.name, sub.subject_name\nORDER BY s.name, sub.subject_name;`,
+    solutionLang: "sql", complexity: "O(S×Sub) rows generated",
+  },
+  {
+    id: "lc-595", title: "Big Countries", domainId: "D", platform: "LEETCODE", leetcodeSlug: "big-countries",
+    leetcodeUrl: L("big-countries"), pattern: "WHERE basics", difficulty: "EASY", topicIds: ["D1"],
+    statement: "Countries with area ≥ 3,000,000 OR population ≥ 25,000,000: show name, population, area.",
+    examples: [
+      { input: "Afghanistan (area 652230, pop 25500100)", output: "included (population)" },
+    ],
+    hints: ["Two conditions joined by OR — not AND.", "Straight SELECT/WHERE exercise."],
+    approach: "SELECT the three columns WHERE area >= 3000000 OR population >= 25000000. The OR is the only subtlety.",
+    solution: `SELECT name, population, area\nFROM world\nWHERE area >= 3000000 OR population >= 25000000;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-620", title: "Not Boring Movies", domainId: "D", platform: "LEETCODE", leetcodeSlug: "not-boring-movies",
+    leetcodeUrl: L("not-boring-movies"), pattern: "WHERE basics", difficulty: "EASY", topicIds: ["D1", "D8"],
+    statement: "Even-id, non-'boring', rating ≥ 3? No: id % 2 = 1 (odd), description != 'boring', ORDER BY rating DESC.",
+    examples: [
+      { input: "War (odd id, rating 3.9), boring film (even id)", output: "War only" },
+    ],
+    hints: ["Odd id: MOD(id, 2) = 1 or id % 2 = 1.", "String compare <> 'boring'."],
+    approach: "WHERE MOD(id,2)=1 AND description <> 'boring' ORDER BY rating DESC. <> on strings and MOD — the two mini-skills.",
+    solution: `SELECT id, movie, description, rating\nFROM cinema\nWHERE MOD(id, 2) = 1\n  AND description <> 'boring'\nORDER BY rating DESC;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-610", title: "Triangle Judgement", domainId: "D", platform: "LEETCODE", leetcodeSlug: "triangle-judgement",
+    leetcodeUrl: L("triangle-judgement"), pattern: "CASE WHEN", difficulty: "EASY", topicIds: ["D8", "D1"],
+    statement: "For each row (x, y, z) report 'Yes' if a triangle is possible (sum of any two sides > third), else 'No'.",
+    examples: [
+      { input: "x=13, y=8, z=6", output: "Yes" },
+      { input: "x=1, y=2, z=20", output: "No" },
+    ],
+    hints: ["One CASE WHEN with the triangle inequality.", "x+y>z AND x+z>y AND y+z>x."],
+    approach: "CASE WHEN x+y>z AND x+z>y AND y+z>x THEN 'Yes' ELSE 'No' END AS triangle.",
+    solution: `SELECT x, y, z,\n  CASE WHEN x + y > z AND x + z > y AND y + z > x\n       THEN 'Yes' ELSE 'No' END AS triangle\nFROM triangle;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-197", title: "Rising Temperature", domainId: "D", platform: "LEETCODE", leetcodeSlug: "rising-temperature",
+    leetcodeUrl: L("rising-temperature"), pattern: "Self-join + dates", difficulty: "EASY", topicIds: ["D8", "D3"],
+    statement: "Find dates where today's temperature is strictly higher than yesterday's.",
+    examples: [
+      { input: "2015-01-02: 10 · 2015-01-01: 5", output: "2015-01-02" },
+    ],
+    hints: ["Self-join weather a, weather b.", "DATEDIFF(a.recordDate, b.recordDate) = 1 AND a.temperature > b.temperature."],
+    approach: "Join the table to itself on consecutive dates; keep rows where a is hotter. Don't compare string dates — use DATEDIFF.",
+    solution: `SELECT a.id\nFROM weather a\nJOIN weather b\n  ON DATEDIFF(a.recordDate, b.recordDate) = 1\nWHERE a.temperature > b.temperature;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "lc-1148", title: "Article Views I", domainId: "D", platform: "LEETCODE", leetcodeSlug: "article-views-i",
+    leetcodeUrl: L("article-views-i"), pattern: "SELECT DISTINCT", difficulty: "EASY", topicIds: ["D1"],
+    statement: "Authors who viewed their own articles. Return DISTINCT author_id.",
+    examples: [
+      { input: "viewer 1 viewed article by author 1", output: "1" },
+    ],
+    hints: ["WHERE author_id = viewer_id.", "DISTINCT kills repeats."],
+    approach: "SELECT DISTINCT author_id FROM views WHERE author_id = viewer_id. One line, two mini-skills.",
+    solution: `SELECT DISTINCT author_id AS id\nFROM views\nWHERE author_id = viewer_id;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "site-avg-marks-desc", title: "Average Marks per Student (DESC)", domainId: "D", platform: "SITE",
+    pattern: "GROUP BY + ORDER BY", difficulty: "EASY", topicIds: ["D2", "D3"],
+    statement: "Schema: students(id, name), enrollments(student_id, course_id, marks). Print each student's average marks, highest first. (Exam-style warm-up for Q2.)",
+    examples: [
+      { input: "Asha: 80, 90 · Ravi: 60, 70", output: "Asha 85.0 · Ravi 65.0 (in that order)" },
+    ],
+    hints: ["JOIN then GROUP BY student.", "AVG(e.marks) AS avg_marks, ORDER BY avg_marks DESC."],
+    approach: "INNER JOIN enrollments, GROUP BY student, AVG aggregate, ORDER BY DESC. The exact skeleton your exam Q2 needs.",
+    solution: `SELECT s.name, AVG(e.marks) AS avg_marks\nFROM students s\nJOIN enrollments e ON e.student_id = s.id\nGROUP BY s.id, s.name\nORDER BY avg_marks DESC;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "site-lowest-avg", title: "Lowest-Average Student (your Q2b, fixed)", domainId: "D", platform: "SITE",
+    pattern: "GROUP BY + LIMIT 1", difficulty: "EASY", topicIds: ["D2", "D6"],
+    statement: "Same schema. Find the student with the LOWEST average marks. (This is the question you flubbed by forgetting DESC — re-solve it cold.)",
+    examples: [
+      { input: "Asha: 80, 90 · Ravi: 60, 70", output: "Ravi 65.0" },
+      { input: "One student only", output: "that student" },
+    ],
+    hints: [
+      "Option A: ORDER BY AVG(marks) ASC LIMIT 1.",
+      "Option B: ORDER BY AVG(marks) DESC LIMIT 1 gives the HIGHEST — read the direction twice (your exact bug).",
+    ],
+    approach: "JOIN → GROUP BY → ORDER BY AVG(marks) ASC → LIMIT 1. The trap twins: ASC finds lowest, DESC finds highest. Read what the question asks, then verify the sort direction on the trace.",
+    solution: `SELECT s.name, AVG(e.marks) AS avg_marks\nFROM students s\nJOIN enrollments e ON e.student_id = s.id\nGROUP BY s.id, s.name\nORDER BY avg_marks ASC\nLIMIT 1;`,
+    solutionLang: "sql",
+  },
+  {
+    id: "site-no-enrollment", title: "Students With No Enrollments", domainId: "D", platform: "SITE",
+    pattern: "LEFT JOIN + IS NULL", difficulty: "EASY", topicIds: ["D3", "D6"],
+    statement: "Schema: students(id, name), enrollments(student_id, course_id). List students who never enrolled in any course.",
+    examples: [
+      { input: "Asha enrolled ×2 · Ravi enrolled ×0", output: "Ravi" },
+    ],
+    hints: ["LEFT JOIN from students to enrollments.", "WHERE e.student_id IS NULL finds the orphans."],
+    approach: "LEFT JOIN keeps all students; unmatched ones have NULL right-table columns. Filtering IS NULL isolates the never-matched. (lc-183's exact shape.)",
+    solution: `SELECT s.name\nFROM students s\nLEFT JOIN enrollments e ON e.student_id = s.id\nWHERE e.student_id IS NULL;`,
+    solutionLang: "sql",
+  },
+];

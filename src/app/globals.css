@@ -1,0 +1,103 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-cyan-sniper: var(--cyan-sniper);
+  --color-success-sniper: var(--success-sniper);
+  --color-warn-sniper: var(--warn-sniper);
+  --color-danger-sniper: var(--danger-sniper);
+  --color-gold-sniper: var(--gold-sniper);
+  --color-surface-2: var(--surface-2);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ─── SNIPER dark theme (only theme) ─────────────────────────────────── */
+:root {
+  --radius: 0.5rem;
+  --background: #0b0f14;
+  --foreground: #e5edf5;
+  --card: #111823;
+  --card-foreground: #e5edf5;
+  --popover: #111823;
+  --popover-foreground: #e5edf5;
+  --primary: #22d3ee;
+  --primary-foreground: #06202a;
+  --secondary: #16202e;
+  --secondary-foreground: #e5edf5;
+  --muted: #16202e;
+  --muted-foreground: #8ca3b8;
+  --accent: #16202e;
+  --accent-foreground: #e5edf5;
+  --destructive: #f87171;
+  --border: #1f2a3a;
+  --input: #1f2a3a;
+  --ring: #22d3ee;
+  --surface-2: #16202e;
+  --cyan-sniper: #22d3ee;
+  --success-sniper: #34d399;
+  --warn-sniper: #fbbf24;
+  --danger-sniper: #f87171;
+  --gold-sniper: #f59e0b;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* page-transition */
+.view-enter {
+  animation: viewIn 180ms ease-out;
+}
+@keyframes viewIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* streak flame pulse */
+.flame-pulse {
+  animation: flamePulse 2s ease-in-out infinite;
+}
+@keyframes flamePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.08); }
+}
+
+/* code block scrollbar */
+.code-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+.code-scroll::-webkit-scrollbar-thumb { background: #1f2a3a; border-radius: 4px; }
+.code-scroll::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .view-enter, .flame-pulse { animation: none !important; }
+  * { transition-duration: 0.01ms !important; }
+}

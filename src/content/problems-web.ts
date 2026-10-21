@@ -1,0 +1,150 @@
+import type { Problem } from "./types";
+
+// Domain E — 12 Web problems (SITE tasks: build or fix HTML/CSS/JS)
+export const PROBLEMS_WEB: Problem[] = [
+  {
+    id: "site-html-boiler", title: "Write the HTML Boilerplate", domainId: "E", platform: "SITE",
+    pattern: "HTML basics", difficulty: "EASY", topicIds: ["E1"],
+    statement: "From memory, write the complete minimal HTML5 boilerplate with an h1 and one paragraph. No peeking.",
+    examples: [
+      { input: "Task: render 'SNIPER' as an h1", output: "A valid full document with doctype, head (charset+viewport+title), body containing <h1>SNIPER</h1>" },
+    ],
+    hints: ["Five lines before <body>.", "charset + viewport metas are non-negotiable."],
+    approach: "doctype → html → head (charset, viewport, title) → body. Muscle memory — the fix-it question may start from a broken boilerplate.",
+    solution: `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>My page</title>\n</head>\n<body>\n  <h1>SNIPER</h1>\n  <p>One paragraph.</p>\n</body>\n</html>`,
+    solutionLang: "html",
+  },
+  {
+    id: "site-nav", title: "Navbar with Anchor Links", domainId: "E", platform: "SITE",
+    pattern: "HTML basics", difficulty: "EASY", topicIds: ["E1", "E3"],
+    statement: "Build a semantic <nav> with 3 links: one external (new tab), one in-page jump to #plan, one mailto.",
+    examples: [
+      { input: "Sections: Home, Plan, Contact", output: "<nav> with <a href> ×3; the Plan link scrolls to the element with id='plan'" },
+    ],
+    hints: ["In-page jump: href='#plan' targets id='plan'.", "External + new tab: target='_blank'."],
+    approach: "nav > a ×3. In-page anchors pair href with an id elsewhere in the document — the browser scrolls to it.",
+    solution: `<nav>\n  <a href="https://example.com" target="_blank">Docs</a>\n  <a href="#plan">Plan</a>\n  <a href="mailto:me@example.com">Contact</a>\n</nav>\n\n<h2 id="plan">Battle Plan</h2>\n<p>…content to jump to…</p>`,
+    solutionLang: "html",
+  },
+  {
+    id: "site-form", title: "Registration Form", domainId: "E", platform: "SITE",
+    pattern: "Forms", difficulty: "EASY", topicIds: ["E2"],
+    statement: "Build a registration form: email (required), password, age (number), plan radios, terms checkbox, submit button. Every input needs a label bound correctly.",
+    examples: [
+      { input: "Submit empty", output: "browser blocks — email is required" },
+      { input: "Click the 'Email' text label", output: "the email input focuses (label-for binding works)" },
+    ],
+    hints: ["label for = input id.", "Radios need the SAME name to be exclusive."],
+    approach: "form > (label+input) ×5. name attributes define what the server receives; ids bind labels. radio group shares name='plan'.",
+    solution: `<form action="/register" method="post">\n  <label for="email">Email</label>\n  <input type="email" id="email" name="email" required>\n\n  <label for="pass">Password</label>\n  <input type="password" id="pass" name="pass" required>\n\n  <label for="age">Age</label>\n  <input type="number" id="age" name="age" min="1">\n\n  <input type="radio" id="p1" name="plan" value="free"> <label for="p1">Free</label>\n  <input type="radio" id="p2" name="plan" value="pro"> <label for="p2">Pro</label>\n\n  <input type="checkbox" id="tos" name="tos" required>\n  <label for="tos">I agree to the terms</label>\n\n  <button type="submit">Register</button>\n</form>`,
+    solutionLang: "html",
+  },
+  {
+    id: "site-table", title: "Marks Table", domainId: "E", platform: "SITE",
+    pattern: "Tables", difficulty: "EASY", topicIds: ["E3"],
+    statement: "Build a marks table with a proper thead (Name, Mark) and two body rows. Header 'Mark' should span 1 column normally — but add a summary row where a cell spans both columns.",
+    examples: [
+      { input: "Asha 88, Ravi 72, summary row", output: "thead (th ×2), tbody ×2 rows, tfoot row with one td colspan=2" },
+    ],
+    hints: ["th inside thead/tr.", "colspan='2' on the summary cell."],
+    approach: "table > thead > tr > th ×2; tbody > tr > td ×2 (×2 rows); tfoot or last row with a single td colspan=2.",
+    solution: `<table>\n  <thead>\n    <tr><th>Name</th><th>Mark</th></tr>\n  </thead>\n  <tbody>\n    <tr><td>Asha</td><td>88</td></tr>\n    <tr><td>Ravi</td><td>72</td></tr>\n  </tbody>\n  <tfoot>\n    <tr><td colspan="2">Average: 80</td></tr>\n  </tfoot>\n</table>`,
+    solutionLang: "html",
+  },
+  {
+    id: "site-boxmodel", title: "Centered Card (box model)", domainId: "E", platform: "SITE",
+    pattern: "Box model", difficulty: "EASY", topicIds: ["E4"],
+    statement: "Create a 300px-wide card with padding 20px and a border, centered horizontally. Predict: with default box-sizing, how wide is it actually? Fix it.",
+    examples: [
+      { input: "width 300 + padding 20 + border 1", output: "actual width 342px with content-box → set box-sizing: border-box to make it truly 300" },
+    ],
+    hints: ["margin: 0 auto centers a block with a set width.", "border-box makes width include padding + border."],
+    approach: "width + margin auto for centering; box-sizing: border-box so the declared width is the real width.",
+    solution: `* { box-sizing: border-box; }\n.card {\n  width: 300px;\n  padding: 20px;\n  border: 1px solid #333;\n  margin: 16px auto;   /* centers horizontally */\n}`,
+    solutionLang: "css",
+  },
+  {
+    id: "site-flexnav", title: "Flexbox Navbar", domainId: "E", platform: "SITE",
+    pattern: "Flexbox", difficulty: "EASY", topicIds: ["E6"],
+    statement: "Build a navbar: logo on the left, three links on the right, vertically centered, wrapping allowed on small screens.",
+    examples: [
+      { input: "Logo + Home/Plan/Contact", output: "one row, logo far left, links grouped right, all vertically centered" },
+    ],
+    hints: ["display:flex + justify-content:space-between.", "margin-right:auto on the logo is the alternative.", "align-items:center for vertical centering."],
+    approach: "Flex container with space-between; logo and a flex group of links as the two children. align-items centers vertically. gap between links.",
+    solution: `.nav {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 12px;\n}\n.links { display: flex; gap: 16px; }`,
+    solutionLang: "css",
+  },
+  {
+    id: "site-grid", title: "Grid Photo Gallery", domainId: "E", platform: "SITE",
+    pattern: "Grid", difficulty: "EASY", topicIds: ["E7"],
+    statement: "Build a 3-column gallery of 7 tiles with 12px gaps; make the first tile span two columns.",
+    examples: [
+      { input: "7 tiles", output: "row 1: big tile + 1 tile; rows continue; first tile spans 2 columns" },
+    ],
+    hints: ["grid-template-columns: repeat(3, 1fr).", "grid-column: span 2 on the hero tile."],
+    approach: "Grid parent with repeat(3,1fr) + gap; first child spans 2 columns. 7 tiles fill the 3-column flow naturally.",
+    solution: `.gallery {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 12px;\n}\n.hero { grid-column: span 2; }`,
+    solutionLang: "css",
+  },
+  {
+    id: "site-cardfix", title: "Fix Your Broken Card (Day-2 bugs)", domainId: "E", platform: "SITE",
+    pattern: "CSS fix-it", difficulty: "EASY", topicIds: ["E8"],
+    statement: "This card renders with squashed text and sharp corners. Find and fix BOTH bugs — they are the exact two you shipped on Day 2.",
+    examples: [
+      { input: ".card { line-height: 10px; }  /* no border-radius anywhere */", output: "line-height: 1.5 (unitless) + border-radius: 6px" },
+    ],
+    hints: ["Text looks crushed → line-height is in fixed px.", "Corners look sharp → border-radius is missing."],
+    approach: "line-height must be unitless (1.5) so it scales with font-size; 10px on 16px text overlaps glyphs. border-radius: 6px rounds the corners. Two lines, total fix time 30 seconds.",
+    solution: `.card {\n  font-size: 16px;\n  line-height: 1.5;      /* was 10px — crushed */\n  border-radius: 6px;    /* was missing */\n  padding: 16px;\n  background: #16202E;\n}`,
+    solutionLang: "css",
+  },
+  {
+    id: "site-hover", title: "Hover-Lift Card with Transition", domainId: "E", platform: "SITE",
+    pattern: "Transitions", difficulty: "EASY", topicIds: ["E9"],
+    statement: "Make a card that lifts 2px with a glow on hover, animating smoothly BOTH ways. Bonus: add a 2s infinite pulse on a badge.",
+    examples: [
+      { input: "Hover over card", output: "rises 2px, border brightens, 200ms ease, and re-animates on un-hover" },
+    ],
+    hints: ["transition belongs on the BASE rule.", "transform: translateY(-2px) in :hover.", "@keyframes + animation for the pulse."],
+    approach: "Put transition on .card (not only :hover) so un-hovering animates too. Keyframes define the pulse; animation applies it.",
+    solution: `.card {\n  transition: transform 0.2s ease, border-color 0.2s;\n  border: 1px solid #1F2A3A;\n}\n.card:hover {\n  transform: translateY(-2px);\n  border-color: #22D3EE;\n}\n\n@keyframes pulse {\n  from { opacity: 1; }  to { opacity: 0.5; }\n}\n.badge { animation: pulse 2s infinite; }`,
+    solutionLang: "css",
+  },
+  {
+    id: "site-counter", title: "JS Click Counter", domainId: "E", platform: "SITE",
+    pattern: "JS survival", difficulty: "EASY", topicIds: ["E10"],
+    statement: "A button and a <p> showing 0. Each click increments the number and turns the text green when it passes 10.",
+    examples: [
+      { input: "Click ×11", output: "text shows 11 and is green" },
+    ],
+    hints: ["querySelector('#go'), addEventListener('click', fn).", "out.textContent = n updates the page.", "out.style.color = 'green' when n > 10."],
+    approach: "Grab elements, keep count in a let, mutate textContent and style inside the handler. This is the whole JS survival kit in one file.",
+    solution: `<button id="go">Click</button>\n<p id="out">0</p>\n<script>\n  const btn = document.querySelector("#go");\n  const out = document.getElementById("out");\n  let n = 0;\n  btn.addEventListener("click", () => {\n    n += 1;\n    out.textContent = n;\n    if (n > 10) out.style.color = "green";\n  });\n</script>`,
+    solutionLang: "html",
+  },
+  {
+    id: "site-darkmode", title: "JS Dark-Mode Toggle", domainId: "E", platform: "SITE",
+    pattern: "JS survival", difficulty: "EASY", topicIds: ["E10"],
+    statement: "A button toggles a 'dark' class on <body>. CSS defines what .dark does. Then: change the heading text from JS.",
+    examples: [
+      { input: "Click toggle twice", output: "page darkens then returns; classList toggled twice" },
+    ],
+    hints: ["document.body.classList.toggle('dark').", "h1.textContent = 'New text'.", "This is the exact 3-line pattern from E10."],
+    approach: "classList.toggle flips the class on each click; CSS styles both states. textContent writes plain text into the heading.",
+    solution: `<button id="mode">Toggle</button>\n<h1 id="title">Hello</h1>\n<script>\n  const btn = document.querySelector("#mode");\n  btn.onclick = () => document.body.classList.toggle("dark");\n  document.querySelector("#title").textContent = "SNIPER mode";\n</script>\n<style>\n  body.dark { background: #0B0F14; color: #E5EDF5; }\n</style>`,
+    solutionLang: "html",
+  },
+  {
+    id: "site-html-semantics", title: "Semantic Layout Rebuild", domainId: "E", platform: "SITE",
+    pattern: "HTML semantics", difficulty: "EASY", topicIds: ["E1"],
+    statement: "This page is a pile of divs: <div class='top'>, <div class='links'>, <div class='content'>, <div class='bottom'>. Rebuild it with semantic tags.",
+    examples: [
+      { input: "div.top → ? · div.links → ? · div.content → ? · div.bottom → ?", output: "header → nav → main → footer" },
+    ],
+    hints: ["Top of page with title = header.", "Link region = nav. Primary content = main (once). Bottom = footer."],
+    approach: "Semantic mapping: header, nav, main, footer. Screen readers and search engines read structure from these — divs carry zero meaning.",
+    solution: `<header>\n  <h1>Site title</h1>\n  <nav>\n    <a href="#a">A</a> <a href="#b">B</a>\n  </nav>\n</header>\n<main>\n  <section id="a">…</section>\n  <section id="b">…</section>\n</main>\n<footer>© 2026</footer>`,
+    solutionLang: "html",
+  },
+];
